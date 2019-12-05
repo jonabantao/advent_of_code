@@ -3,10 +3,11 @@ class Solution():
         with open(filename, "r") as f:
             input_list = [int(num) for num in f.readline().split(",")]
 
-            return self.run_broken_intcode_computer(input_list, value_in)
+            return self.run_intcode_computer(input_list, value_in)
 
-    def run_broken_intcode_computer(self, intcode, value_in):
+    def run_intcode_computer(self, intcode, value_in):
         curr_ptr = 0
+        last_value = None # For testing op_code 4
 
         while True:
             instruction_count = 0
@@ -42,7 +43,7 @@ class Solution():
                 elif op_code == 4:
                     param1 = self.translate_value(curr_ptr + 1, mode1, intcode)
     
-                    self.op_code4(intcode[curr_ptr + 1], intcode)
+                    last_value = self.op_code4(param1)
 
 
             if op_code == 5 or op_code == 6:
@@ -55,6 +56,13 @@ class Solution():
 
             curr_ptr += instruction_count
 
+        return last_value
+
+    def part_a_tester(self, intcode, value_in):
+        self.run_intcode_computer(intcode, value_in)
+
+        return intcode
+
     def op_code1(self, pos1, pos2):
         return pos1 + pos2
 
@@ -64,8 +72,9 @@ class Solution():
     def op_code3(self, pos, inp, memory):
         memory[pos] = inp
 
-    def op_code4(self, pos, memory):
-        print(memory[pos])
+    def op_code4(self, value):
+        print(value)
+        return value
 
     def op_code5(self, param1, param2):
         return param2 if param1 != 0 else -1
