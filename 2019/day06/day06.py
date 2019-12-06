@@ -2,70 +2,64 @@ import collections
 
 
 class Solution():
-    def solve(self, filename):
+    def solve_part_a(self, filename):
         with open(filename) as f:
-            test = [line.strip() for line in f]
+            input_data = [line.strip() for line in f]
 
-            return self.part_a(test)
+            return self.find_total_direct_and_indirect_orbits(input_data)
 
-    def part_a(self, orbit_list):
-        obj_orb = self.split_data(orbit_list)
-        orbit_map = collections.defaultdict(list)
+    def solve_part_b(self, filename):
+        with open(filename) as f:
+            input_data = [line.strip() for line in f]
+
+            return self.find_min_orbital_transfer_between_me_and_santa(input_data)
+
+    def find_total_direct_and_indirect_orbits(self, orbit_list):
+        orbit_trail = self.setup_data(orbit_list)
+
+        return sum([len(trail) for trail in orbit_trail.values()])
+
+    def find_min_orbital_transfer_between_me_and_santa(self, orbit_list):
+        orbit_trail = self.setup_data(orbit_list)
+
+        common_objs = orbit_trail["SAN"].intersection(orbit_trail["YOU"])
+        closest_obj_orbit_count = max([len(orbit_trail[obj]) for obj in common_objs])
+
+        santa_orbit_count_to_closest_obj = len(orbit_trail["SAN"]) - closest_obj_orbit_count
+        my_orbit_count_to_closest_obj = len(orbit_trail["YOU"]) - closest_obj_orbit_count
+
+        # -2 to remove self and santa orbits
+        return santa_orbit_count_to_closest_obj + my_orbit_count_to_closest_obj - 2
+
+    def setup_data(self, orbit_list):
+        orbit_data = self.split_data(orbit_list)
+        orbit_map = {orbiting: orbited for orbited, orbiting in orbit_data}
         orbit_trail = collections.defaultdict(set)
-        orbit_count = collections.defaultdict(int)
 
-        for obj, orbiter in obj_orb:
-            orbit_map[orbiter].append(obj)
+        for orbit_check in list(orbit_map.keys()):
+            self.record_orbit_trail(orbit_check, orbit_trail, orbit_map, orbit_check)
 
-        for obj_orbiter in list(orbit_map.keys()):
-            orbit_count[obj_orbiter] = self.count_orbits(
-                obj_orbiter, orbit_map, orbit_count, orbit_trail, obj_orbiter)
-
-        stuff = orbit_trail["SAN"].intersection(orbit_trail["YOU"])
-
-        maxstuff = max([orbit_count[de] for de in list(stuff)])
-
-        return (orbit_count["SAN"] - maxstuff) + (orbit_count["YOU"] - maxstuff) - 2
-
-        # return sum(list(orbit_count.values()))
+        return orbit_trail
 
     def split_data(self, orbits):
         return [orbit.split(")") for orbit in orbits]
 
-    def count_orbits(self, obj, orbit_map, orbit_records, trail, defobj):
-        if obj in orbit_records:
-            trail[defobj].update(trail[obj])
-            return orbit_records[obj]
+    def record_orbit_trail(self, obj, orbit_trail, orbit_map, start_obj):
+        if obj in orbit_trail:
+            orbit_trail[start_obj].update(orbit_trail[obj])
+            return
 
-        orbiting = orbit_map[obj]
-        trail[defobj].update(orbiting)
+        if obj not in orbit_map:
+            return
 
-        if not orbiting:
-            return 0
+        next_obj = orbit_map[obj]
+        orbit_trail[start_obj].add(next_obj)
 
-        # results = [self.count_orbits(
-            # orbiting_obj, orbit_map, orbit_records) + 1 for orbiting_obj in orbiting]
-
-        return sum([self.count_orbits(orbiting_obj, orbit_map, orbit_records, trail, defobj) + 1 for orbiting_obj in orbiting])
+        self.record_orbit_trail(next_obj, orbit_trail, orbit_map, start_obj)
 
 
 if __name__ == "__main__":
     solution = Solution()
-    stuff = [
-        "COM)B",
-        "B)C",
-        "C)D",
-        "D)E",
-        "E)F",
-        "B)G",
-        "G)H",
-        "D)I",
-        "E)J",
-        "J)K",
-        "K)L",
-        "K)YOU",
-        "I)SAN",
-    ]
-    print(solution.solve("input.txt"))
-    # solution.solve("input.txt", 5)
-    # print(solution.part_a(stuff))
+
+    print("Part A:", solution.solve_part_a("input.txt"))
+    print("Part B:", solution.solve_part_b("input.txt"))
