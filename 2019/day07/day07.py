@@ -1,4 +1,5 @@
 import itertools
+import collections
 
 
 class Solution():
@@ -6,27 +7,47 @@ class Solution():
         with open(filename, "r") as f:
             input_list = [int(num) for num in f.readline().split(",")]
 
-            return max([self.amplify(input_list, perm) for perm in itertools.permutations(range(5), 5)])
+            return max([self.part_b(input_list, perm) for perm in itertools.permutations(range(5), 5)])
+
+    def solve_b(self, filename):
+        with open(filename, "r") as f:
+            input_list = [int(num) for num in f.readline().split(",")]
+
+            return max([self.part_b(input_list, perm) for perm in itertools.permutations(range(5, 10), 5)])
 
     def amplify(self, intcode, settings):
         val = 0
 
         for phase in settings:
             values = [val, phase]
-            val = self.run_intcode_computer(intcode[:], values)
+            val = next(self.run_intcode_computer(intcode[:], values))
 
         return val
 
+    def part_b(self, intcode, settings):
+        val = 0
+        inputs = [collections.deque([phase]) for phase in settings]
+        amps = [self.run_intcode_computer(intcode[:], inp) for inp in inputs]
+        current_amp = 0
+
+        while True:
+            try:
+                inputs[current_amp].appendleft(val)
+                next_val = next(amps[current_amp])
+                current_amp = (current_amp + 1) % 5
+                val = next_val
+            except StopIteration:
+                return val
+
     def run_intcode_computer(self, intcode, values):
         curr_ptr = 0
-        last_value = None  # For testing op_code 4
 
         while True:
             instruction_count = 0
             op_code, mode1, mode2 = self.translate_modes(intcode[curr_ptr])
 
             if op_code == 99:
-                break
+                raise StopIteration()
 
             if op_code in [1, 2, 5, 6, 7, 8]:
                 param1 = self.translate_value(curr_ptr + 1, mode1, intcode)
@@ -56,7 +77,7 @@ class Solution():
                 elif op_code == 4:
                     param1 = self.translate_value(curr_ptr + 1, mode1, intcode)
 
-                    last_value = self.op_code4(param1)
+                    yield self.op_code4(param1)
 
             if op_code == 5 or op_code == 6:
                 continue
@@ -68,7 +89,7 @@ class Solution():
 
             curr_ptr += instruction_count
 
-        return last_value
+        raise Exception("Your computer asplode.")
 
     def part_a_tester(self, intcode, value_in):
         self.run_intcode_computer(intcode, value_in)
@@ -119,3 +140,4 @@ if __name__ == "__main__":
     solution = Solution()
 
     print("Part A:", solution.solve_a("input.txt"))
+    print("Part B:", solution.solve_b("input.txt"))
