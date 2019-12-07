@@ -7,24 +7,15 @@ class Solution():
         with open(filename, "r") as f:
             input_list = [int(num) for num in f.readline().split(",")]
 
-            return max([self.part_b(input_list, perm) for perm in itertools.permutations(range(5), 5)])
+            return max([self.compute_thruster_signal(input_list, perm) for perm in itertools.permutations(range(5), 5)])
 
     def solve_b(self, filename):
         with open(filename, "r") as f:
             input_list = [int(num) for num in f.readline().split(",")]
 
-            return max([self.part_b(input_list, perm) for perm in itertools.permutations(range(5, 10), 5)])
+            return max([self.compute_thruster_signal(input_list, perm) for perm in itertools.permutations(range(5, 10), 5)])
 
-    def amplify(self, intcode, settings):
-        val = 0
-
-        for phase in settings:
-            values = [val, phase]
-            val = next(self.run_intcode_computer(intcode[:], values))
-
-        return val
-
-    def part_b(self, intcode, settings):
+    def compute_thruster_signal(self, intcode, settings):
         val = 0
         inputs = [collections.deque([phase]) for phase in settings]
         amps = [self.run_intcode_computer(intcode[:], inp) for inp in inputs]
@@ -47,7 +38,7 @@ class Solution():
             op_code, mode1, mode2 = self.translate_modes(intcode[curr_ptr])
 
             if op_code == 99:
-                raise StopIteration()
+                return
 
             if op_code in [1, 2, 5, 6, 7, 8]:
                 param1 = self.translate_value(curr_ptr + 1, mode1, intcode)
@@ -90,11 +81,6 @@ class Solution():
             curr_ptr += instruction_count
 
         raise Exception("Your computer asplode.")
-
-    def part_a_tester(self, intcode, value_in):
-        self.run_intcode_computer(intcode, value_in)
-
-        return intcode
 
     def op_code1(self, pos1, pos2):
         return pos1 + pos2
