@@ -26,6 +26,61 @@ class Solution():
 
             return len(tiles[BLOCK])
 
+
+    def solve_b(self, filename):
+        with open(filename, "r") as f:
+            input_list = [int(num) for num in f.readline().split(",")]
+            input_list.extend([0] * 10000)
+
+            computer = self.run_intcode_computer(input_list, [])
+
+            tiles = {
+                EMPTY: set(),
+                WALL: set(),
+                BLOCK: set(),
+                PADDLE: set(),
+                BALL: set(),
+            }
+
+            self.setup_tiles(tiles, computer)
+            
+            # Freeplay
+            input_list[0] = 2
+            score = 0
+            score_code = (-1, 0)
+            values = collections.deque([])
+
+            arcade = self.run_intcode_computer(input_list, values)
+
+            paddle_x_pos = list(tiles[PADDLE])[0][0]
+            ball_x_pos = list(tiles[BALL])[0][0]
+
+            try:
+                while True:
+                    x_coord = next(arcade)
+                    y_coord = next(arcade)
+                    tile_type = next(arcade)
+        
+                    coord = (x_coord, y_coord)
+
+                    if coord == score_code:
+                        score = tile_type
+
+                    if tile_type == PADDLE:
+                        paddle_x_pos = x_coord
+                    elif tile_type == BALL:
+                        ball_x_pos = x_coord
+
+                    if paddle_x_pos == ball_x_pos:
+                        values.append(0)
+                    elif paddle_x_pos > ball_x_pos:
+                        values.append(-1)
+                    else:
+                        values.append(1)
+
+            except StopIteration:
+                return score
+
     def setup_tiles(self, tiles, computer):
         try:
             while True:
@@ -160,3 +215,4 @@ if __name__ == "__main__":
     solution = Solution()
 
     print("Part A:", solution.solve_a("input.txt"))
+    print("Part B:", solution.solve_b("input.txt"))
